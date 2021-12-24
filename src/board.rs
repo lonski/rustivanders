@@ -1,22 +1,52 @@
-use crate::renderer::Color;
-use crate::renderer::Renderer;
+use crate::point::Point;
+use crate::renderer::{Color, Renderable, Renderer};
+use crate::sprite::Sprite;
 
 pub struct Board {
-    player_pos: (u16, u16),
+    width: u16,
+    height: u16,
+    player: Sprite,
+    bullets: Vec<Sprite>,
 }
 
 impl Board {
     pub fn new() -> Self {
-        Board { player_pos: (0, 0) }
+        Board {
+            width: 80,
+            height: 30,
+            player: Sprite::new_player(10, 2),
+            bullets: vec![Sprite::new_bullet(10, 0)],
+        }
     }
 
-    pub fn render(&self, renderer: &mut Box<dyn Renderer>) {
-        renderer.draw(self.player_pos, '^', Color::Yellow);
+    pub fn move_player_by(&mut self, d: &Point) {
+        self.player.move_by(d);
     }
 
-    pub fn move_player_by(&mut self, d: (i16, i16)) {
-        let new_x = (self.player_pos.0 as i16 + d.0).max(0) as u16;
-        let new_y = (self.player_pos.1 as i16 + d.1).max(0) as u16;
-        self.player_pos = (new_x, new_y);
+    pub fn update(&mut self) {
+        // match self.player.color {
+        //     Color::Red => self.player.color = Color::Blue,
+        //     _ => self.player.color = Color::Red,
+        // }
+        for bullet in &mut self.bullets {
+            bullet.pos += Point::new(0, 1);
+            if bullet.pos.y > 30 {
+                bullet.pos = Point::new(0, 0)
+            }
+        }
+    }
+}
+
+impl Renderable for Board {
+    fn render(&self, renderer: &mut Box<dyn Renderer>) {
+        for x in 0..self.width {
+            for y in 0..self.height {
+                renderer.draw(&Point::new(x as i16, y as i16), '.', Color::Grey)
+            }
+        }
+        self.player.render(renderer);
+        for bullet in &self.bullets {
+            bullet.render(renderer);
+        }
     }
 }

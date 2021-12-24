@@ -1,3 +1,4 @@
+use crate::point::Point;
 use std::io::Write;
 
 use crossterm::{
@@ -11,7 +12,11 @@ pub trait Renderer {
     fn cleanup(&mut self);
     fn clear(&mut self);
     fn flush(&mut self);
-    fn draw(&mut self, pos: (u16, u16), c: char, color: Color);
+    fn draw(&mut self, pos: &Point, c: char, color: Color);
+}
+
+pub trait Renderable {
+    fn render(&self, renderer: &mut Box<dyn Renderer>);
 }
 
 pub struct ConsoleRenderer<W>
@@ -27,6 +32,7 @@ pub enum Color {
     Blue,
     Green,
     Yellow,
+    Grey,
 }
 
 impl Color {
@@ -36,6 +42,7 @@ impl Color {
             Color::Green => crossterm::style::Color::Green,
             Color::Blue => crossterm::style::Color::Blue,
             Color::Yellow => crossterm::style::Color::Yellow,
+            Color::Grey => crossterm::style::Color::Grey,
         }
     }
 }
@@ -58,7 +65,7 @@ where
 {
     fn prepare(&mut self) {
         enable_raw_mode().expect("Failed to enable raw mode");
-        execute!(self.w, terminal::EnterAlternateScreen);
+        execute!(self.w, terminal::EnterAlternateScreen, cursor::Hide,);
     }
 
     fn cleanup(&mut self) {
@@ -72,23 +79,17 @@ where
     }
 
     fn clear(&mut self) {
-        queue!(
-            self.w,
-            style::ResetColor,
-            terminal::Clear(ClearType::All),
-            cursor::Hide,
-            cursor::MoveTo(1, 1)
-        );
+        queue!(self.w, terminal::Clear(ClearType::All));
     }
 
     fn flush(&mut self) {
         self.w.flush().expect("Failed to flush")
     }
 
-    fn draw(&mut self, pos: (u16, u16), c: char, color: Color) {
+    fn draw(&mut self, pos: &Point, c: char, color: Color) {
         queue!(
             self.w,
-            cursor::MoveTo(pos.1, pos.0),
+            cursor::MoveTo(pos.x as u16, pos.y as u16),
             style::Print(style::style(c).with(color.to_crossterm())),
         );
     }

@@ -1,7 +1,6 @@
 use crate::board::Board;
-use crate::renderer::Color;
-use crate::renderer::ConsoleRenderer;
-use crate::renderer::Renderer;
+use crate::point::Point;
+use crate::renderer::{Color, ConsoleRenderer, Renderable, Renderer};
 use std::boxed::Box;
 use std::time::Instant;
 use std::{io::Write, time::Duration};
@@ -12,12 +11,12 @@ use crossterm::{
 };
 
 pub struct Rustivanders {
-    color: Color,
     is_exiting: bool,
-    next_tick: i128,
     board: Board,
     renderer: Box<dyn Renderer>,
 }
+
+const MS_PER_FRAME: Duration = Duration::from_millis(32);
 
 impl Rustivanders {
     pub fn new<W>(w: W) -> Self
@@ -25,9 +24,7 @@ impl Rustivanders {
         W: Write + 'static,
     {
         Rustivanders {
-            next_tick: 0,
             is_exiting: false,
-            color: Color::Red,
             board: Board::new(),
             renderer: Box::new(ConsoleRenderer::new(w)),
         }
@@ -35,11 +32,9 @@ impl Rustivanders {
 
     pub fn run(&mut self) {
         self.renderer.prepare();
-        let mut last_time = Instant::now();
 
         loop {
-            let current_time = Instant::now();
-            let elapsed = current_time - last_time;
+            let start_time = Instant::now();
 
             if poll(Duration::from_millis(1)).unwrap_or(false) {
                 if let Ok(event) = read() {
@@ -47,10 +42,10 @@ impl Rustivanders {
                 }
             }
 
-            self.update(elapsed);
+            self.update();
             self.render();
 
-            last_time = current_time;
+            std::thread::sleep(start_time + MS_PER_FRAME - Instant::now());
 
             if self.is_exiting {
                 break;
@@ -64,14 +59,14 @@ impl Rustivanders {
         match event {
             Event::Key(key_event) => match key_event.code {
                 KeyCode::Char(key) => match key {
-                    'j' => self.board.move_player_by((1, 0)),
-                    'k' => self.board.move_player_by((-1, 0)),
-                    'l' => self.board.move_player_by((0, 1)),
-                    'h' => self.board.move_player_by((0, -1)),
+                    'j' => self.board.move_player_by(&Point::new(0, 1)),
+                    'k' => self.board.move_player_by(&Point::new(0, -1)),
+                    'l' => self.board.move_player_by(&Point::new(1, 0)),
+                    'h' => self.board.move_player_by(&Point::new(-1, 0)),
                     _ => {}
                 },
-                KeyCode::Left => self.board.move_player_by((0, -1)),
-                KeyCode::Right => self.board.move_player_by((0, 1)),
+                KeyCode::Left => self.board.move_player_by(&Point::new(-1, 0)),
+                KeyCode::Right => self.board.move_player_by(&Point::new(1, 0)),
                 KeyCode::Esc => self.is_exiting = true,
                 _ => {}
             },
@@ -79,15 +74,8 @@ impl Rustivanders {
         }
     }
 
-    fn update(&mut self, dt: Duration) {
-        self.next_tick -= dt.as_nanos() as i128;
-        if self.next_tick <= 0 {
-            match self.color {
-                Color::Red => self.color = Color::Blue,
-                _ => self.color = Color::Red,
-            }
-            self.next_tick = 1000 * 1000 * 200; //200 ms
-        }
+    fn update(&mut self) {
+        self.board.update();
     }
 
     fn render(&mut self) {
