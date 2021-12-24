@@ -49,28 +49,28 @@ impl Game {
     }
 
     fn process_input(&mut self, event: &Event) {
-        if *event == Event::Key(KeyCode::Char('j').into()) {
-            self.pos = (self.pos.0, self.pos.1 + 1);
-        } else if *event == Event::Key(KeyCode::Char('k').into()) {
-            self.pos = (self.pos.0, self.pos.1 - 1);
-        } else if *event == Event::Key(KeyCode::Char('l').into()) {
-            self.pos = (self.pos.0 + 1, self.pos.1);
-        } else if *event == Event::Key(KeyCode::Char('h').into()) {
-            self.pos = (self.pos.0 - 1, self.pos.1);
-        }
-
-        if *event == Event::Key(KeyCode::Esc.into()) {
-            self.is_exiting = true;
+        match event {
+            Event::Key(key_event) => match key_event.code {
+                KeyCode::Char(key) => match key {
+                    'j' => self.pos = (self.pos.0, self.pos.1 + 1),
+                    'k' => self.pos = (self.pos.0, self.pos.1 - 1),
+                    'l' => self.pos = (self.pos.0 + 1, self.pos.1),
+                    'h' => self.pos = (self.pos.0 - 1, self.pos.1),
+                    _ => {}
+                },
+                KeyCode::Esc => self.is_exiting = true,
+                _ => {}
+            },
+            _ => {}
         }
     }
 
     fn update(&mut self, dt: Duration) {
         self.next_tick -= dt.as_nanos() as i128;
         if self.next_tick <= 0 {
-            if self.color == style::Color::Red {
-                self.color = style::Color::Blue;
-            } else {
-                self.color = style::Color::Red;
+            match self.color {
+                style::Color::Red => self.color = style::Color::Blue,
+                _ => self.color = style::Color::Red,
             }
             self.next_tick = 1000 * 1000 * 200; //200 ms
         }
