@@ -3,9 +3,8 @@ use termion::{raw::IntoRawMode, screen::AlternateScreen};
 use tui::{
     backend::TermionBackend,
     layout::{Constraint, Direction, Layout, Rect},
-    style,
     widgets::{
-        canvas::{Canvas, Context, Points, Rectangle},
+        canvas::{Canvas, Context},
         Block, Borders,
     },
     Terminal,
@@ -14,7 +13,6 @@ use tui::{
 pub trait Renderable {
     fn render(&self, ctx: &mut Context);
 }
-
 
 pub struct Renderer {
     terminal: Terminal<TermionBackend<AlternateScreen<termion::raw::RawTerminal<std::io::Stdout>>>>,
@@ -50,27 +48,7 @@ impl Renderer {
 
                 let canvas = Canvas::default()
                     .block(Block::default().borders(Borders::ALL))
-                    .paint(|mut ctx| {
-                        board.render(&mut ctx);
-                        ctx.print(80.0, 80.0, "X", style::Color::Red);
-                        ctx.draw(&Points {
-                            coords: &[
-                                (50.0, 20.0),
-                                (51.0, 20.0),
-                                (52.0, 20.0),
-                                (51.0, 19.0),
-                                (51.0, 18.0),
-                            ],
-                            color: style::Color::Yellow,
-                        });
-                        ctx.draw(&Rectangle {
-                            x: 10.0,
-                            y: 10.0,
-                            width: 10.0,
-                            height: 10.0,
-                            color: style::Color::Yellow,
-                        });
-                    })
+                    .paint(|mut ctx| board.render(&mut ctx))
                     .x_bounds([0.0, 94.0])
                     .y_bounds([0.0, 30.0]);
                 f.render_widget(canvas, render_area);

@@ -1,7 +1,7 @@
 use crate::board::Board;
 use crate::events::{Config, Event, Events};
-use crate::point::Point;
 use crate::renderer::Renderer;
+use crate::sprite::Direction;
 use std::time::Duration;
 
 use termion::event::Key;
@@ -48,10 +48,9 @@ impl Rustivanders {
         match input {
             Key::Esc => self.is_exiting = true,
             Key::Char('q') => self.is_exiting = true,
-            Key::Down => self.board.move_player_by(&Point::new(0, 1)),
-            Key::Up => self.board.move_player_by(&Point::new(0, -1)),
-            Key::Right => self.board.move_player_by(&Point::new(1, 0)),
-            Key::Left => self.board.move_player_by(&Point::new(-1, 0)),
+            Key::Right => self.board.move_player(Direction::Right),
+            Key::Left => self.board.move_player(Direction::Left),
+            Key::Char(' ') => self.board.player_fire(),
 
             _ => {}
         }

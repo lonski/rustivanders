@@ -4,6 +4,7 @@ mod game;
 mod point;
 mod renderer;
 mod sprite;
+mod ai;
 
 use crate::game::Rustivanders;
 
