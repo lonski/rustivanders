@@ -1,12 +1,12 @@
 mod board;
+mod events;
 mod game;
+mod point;
 mod renderer;
 mod sprite;
-mod point;
 
 use crate::game::Rustivanders;
-use std::io::stdout;
 
 fn main() {
-    Rustivanders::new(stdout()).run();
+    Rustivanders::new().run();
 }

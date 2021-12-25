@@ -1,96 +1,80 @@
-use crate::point::Point;
-use std::io::Write;
-
-use crossterm::{
-    cursor, execute, queue, style,
-    style::Stylize,
-    terminal::{self, disable_raw_mode, enable_raw_mode, ClearType},
+use crate::board::Board;
+use termion::{raw::IntoRawMode, screen::AlternateScreen};
+use tui::{
+    backend::TermionBackend,
+    layout::{Constraint, Direction, Layout, Rect},
+    style,
+    widgets::{
+        canvas::{Canvas, Context, Points, Rectangle},
+        Block, Borders,
+    },
+    Terminal,
 };
 
-pub trait Renderer {
-    fn prepare(&mut self);
-    fn cleanup(&mut self);
-    fn clear(&mut self);
-    fn flush(&mut self);
-    fn draw(&mut self, pos: &Point, c: char, color: Color);
-}
-
 pub trait Renderable {
-    fn render(&self, renderer: &mut Box<dyn Renderer>);
+    fn render(&self, ctx: &mut Context);
 }
 
-pub struct ConsoleRenderer<W>
-where
-    W: Write,
-{
-    w: W,
+
+pub struct Renderer {
+    terminal: Terminal<TermionBackend<AlternateScreen<termion::raw::RawTerminal<std::io::Stdout>>>>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Color {
-    Red,
-    Blue,
-    Green,
-    Yellow,
-    Grey,
-}
-
-impl Color {
-    fn to_crossterm(&self) -> crossterm::style::Color {
-        match self {
-            Color::Red => crossterm::style::Color::Red,
-            Color::Green => crossterm::style::Color::Green,
-            Color::Blue => crossterm::style::Color::Blue,
-            Color::Yellow => crossterm::style::Color::Yellow,
-            Color::Grey => crossterm::style::Color::Grey,
-        }
+impl Renderer {
+    pub fn new() -> Self {
+        let stdout = std::io::stdout().into_raw_mode().unwrap();
+        let stdout = AlternateScreen::from(stdout);
+        let backend = TermionBackend::new(stdout);
+        let terminal = Terminal::new(backend).unwrap();
+        Renderer { terminal }
     }
 }
 
-impl<W> ConsoleRenderer<W>
-where
-    W: Write,
-{
-    pub fn new(w: W) -> Self
-    where
-        W: Write,
-    {
-        ConsoleRenderer { w }
-    }
-}
-
-impl<W> Renderer for ConsoleRenderer<W>
-where
-    W: Write,
-{
-    fn prepare(&mut self) {
-        enable_raw_mode().expect("Failed to enable raw mode");
-        execute!(self.w, terminal::EnterAlternateScreen, cursor::Hide,);
+impl Renderer {
+    pub fn clear(&mut self) {
+        self.terminal.clear().unwrap();
     }
 
-    fn cleanup(&mut self) {
-        execute!(
-            self.w,
-            style::ResetColor,
-            cursor::Show,
-            terminal::LeaveAlternateScreen
-        );
-        disable_raw_mode().unwrap_or_default();
-    }
+    pub fn render(&mut self, board: &Board) {
+        self.terminal
+            .draw(|f| {
+                let render_area = Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints([Constraint::Percentage(100)].as_ref())
+                    .split(Rect {
+                        x: 0,
+                        y: 0,
+                        width: 96,
+                        height: 32,
+                    })[0];
 
-    fn clear(&mut self) {
-        queue!(self.w, terminal::Clear(ClearType::All));
-    }
-
-    fn flush(&mut self) {
-        self.w.flush().expect("Failed to flush")
-    }
-
-    fn draw(&mut self, pos: &Point, c: char, color: Color) {
-        queue!(
-            self.w,
-            cursor::MoveTo(pos.x as u16, pos.y as u16),
-            style::Print(style::style(c).with(color.to_crossterm())),
-        );
+                let canvas = Canvas::default()
+                    .block(Block::default().borders(Borders::ALL))
+                    .paint(|mut ctx| {
+                        board.render(&mut ctx);
+                        ctx.print(80.0, 80.0, "X", style::Color::Red);
+                        ctx.draw(&Points {
+                            coords: &[
+                                (50.0, 20.0),
+                                (51.0, 20.0),
+                                (52.0, 20.0),
+                                (51.0, 19.0),
+                                (51.0, 18.0),
+                            ],
+                            color: style::Color::Yellow,
+                        });
+                        ctx.draw(&Rectangle {
+                            x: 10.0,
+                            y: 10.0,
+                            width: 10.0,
+                            height: 10.0,
+                            color: style::Color::Yellow,
+                        });
+                    })
+                    .x_bounds([0.0, 94.0])
+                    .y_bounds([0.0, 30.0]);
+                f.render_widget(canvas, render_area);
+            })
+            .unwrap();
     }
 }

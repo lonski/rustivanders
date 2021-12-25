@@ -1,9 +1,12 @@
 use crate::point::Point;
-use crate::renderer::{Color, Renderable, Renderer};
+use crate::renderer::Renderable;
+
+use tui::style::Color;
+use tui::widgets::canvas::Context;
 
 pub struct Sprite {
     pub pos: Point,
-    pub c: char,
+    pub symbol: &'static str,
     pub color: Color,
 }
 
@@ -11,7 +14,7 @@ impl Sprite {
     pub fn new_player(x: i16, y: i16) -> Self {
         Sprite {
             pos: Point::new(x, y),
-            c: '^',
+            symbol: "^",
             color: Color::Blue,
         }
     }
@@ -19,8 +22,8 @@ impl Sprite {
     pub fn new_bullet(x: i16, y: i16) -> Self {
         Sprite {
             pos: Point::new(x, y),
-            c: '.',
-            color: Color::Blue,
+            symbol: "*",
+            color: Color::Red,
         }
     }
 
@@ -30,7 +33,12 @@ impl Sprite {
 }
 
 impl Renderable for Sprite {
-    fn render(&self, renderer: &mut Box<dyn Renderer>) {
-        renderer.draw(&self.pos, self.c, self.color);
+    fn render(&self, ctx: &mut Context) {
+        ctx.print(
+            self.pos.x as f64,
+            self.pos.y as f64,
+            &self.symbol,
+            self.color,
+        );
     }
 }
