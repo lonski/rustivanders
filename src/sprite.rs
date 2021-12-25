@@ -1,4 +1,5 @@
 use crate::ai::{BulletAi, InvanderAi, PlayerAi};
+use crate::board::UpdateCommand;
 use crate::point::Point;
 use crate::renderer::Renderable;
 
@@ -38,6 +39,12 @@ pub struct Player {
     pub ai: PlayerAi,
 }
 
+pub trait Sprite<'a> {
+    fn update(&mut self) -> Vec<UpdateCommand>;
+    fn collides(&self, p: &Point) -> bool;
+    fn state(&'a self) -> &'a SpriteState;
+}
+
 impl Player {
     pub fn new(x: i16, y: i16) -> Self {
         Player {
@@ -59,6 +66,20 @@ impl Player {
             },
             ai: PlayerAi::new(),
         }
+    }
+}
+
+impl<'a> Sprite<'a> for Player {
+    fn update(&mut self) -> Vec<UpdateCommand> {
+        self.ai.update(&mut self.state)
+    }
+
+    fn collides(&self, p: &Point) -> bool {
+        self.state.collides(p)
+    }
+
+    fn state(&'a self) -> &'a SpriteState {
+        &self.state
     }
 }
 
@@ -109,6 +130,20 @@ impl Invander {
     }
 }
 
+impl<'a> Sprite<'a> for Invander {
+    fn update(&mut self) -> Vec<UpdateCommand> {
+        self.ai.update(&mut self.state)
+    }
+
+    fn collides(&self, p: &Point) -> bool {
+        self.state.collides(p)
+    }
+
+    fn state(&'a self) -> &'a SpriteState {
+        &self.state
+    }
+}
+
 pub struct Bullet {
     pub state: SpriteState,
     pub ai: BulletAi,
@@ -125,6 +160,20 @@ impl Bullet {
             },
             ai: BulletAi {},
         }
+    }
+}
+
+impl<'a> Sprite<'a> for Bullet {
+    fn update(&mut self) -> Vec<UpdateCommand> {
+        self.ai.update(&mut self.state)
+    }
+
+    fn collides(&self, p: &Point) -> bool {
+        self.state.collides(p)
+    }
+
+    fn state(&'a self) -> &'a SpriteState {
+        &self.state
     }
 }
 

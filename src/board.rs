@@ -1,5 +1,5 @@
 use crate::renderer::Renderable;
-use crate::sprite::{Bullet, Direction, Invander, Player};
+use crate::sprite::{Bullet, Direction, Invander, Player, Sprite};
 
 use std::collections::HashMap;
 use tui::style::Color;
@@ -17,9 +17,9 @@ pub enum UpdateCommand {
 
 pub struct BoardState {
     pub player: Player,
-    pub player_bullets: HashMap<u32, Bullet>,
-    pub bullets: HashMap<u32, Bullet>,
-    pub invanders: HashMap<u32, Invander>,
+    pub player_bullets: HashMap<u32, Box<dyn for<'a> Sprite<'a>>>,
+    pub bullets: HashMap<u32, Box<dyn for<'a> Sprite<'a>>>,
+    pub invanders: HashMap<u32, Box<dyn for<'a> Sprite<'a>>>,
     pub entity_id_counter: u32,
     pub game_over: bool,
 }
@@ -33,19 +33,19 @@ impl BoardState {
     pub fn add_bullet(&mut self, bullet: Bullet) {
         let mut s = bullet;
         s.state.id = self.next_id();
-        self.bullets.insert(s.state.id, s);
+        self.bullets.insert(s.state.id, Box::new(s));
     }
 
     pub fn add_player_bullet(&mut self, bullet: Bullet) {
         let mut s = bullet;
         s.state.id = self.next_id();
-        self.player_bullets.insert(s.state.id, s);
+        self.player_bullets.insert(s.state.id, Box::new(s));
     }
 
     pub fn add_invander(&mut self, invander: Invander) {
         let mut s = invander;
         s.state.id = self.next_id();
-        self.invanders.insert(s.state.id, s);
+        self.invanders.insert(s.state.id, Box::new(s));
     }
 }
 
@@ -79,9 +79,6 @@ impl Board {
         board
     }
 
-    // x1  x2  x3
-    //                xm1  xm2  xm3
-
     pub fn move_player(&mut self, dir: Direction) {
         self.state.player.ai.do_move = dir;
     }
@@ -98,7 +95,7 @@ impl Board {
             .state
             .bullets
             .iter_mut()
-            .flat_map(|(_, e)| e.ai.update(&mut e.state))
+            .flat_map(|(_, e)| e.update())
             .collect::<Vec<_>>();
         self.execute_update_commands(updates);
 
@@ -106,7 +103,7 @@ impl Board {
             .state
             .player_bullets
             .iter_mut()
-            .flat_map(|(_, e)| e.ai.update(&mut e.state))
+            .flat_map(|(_, e)| e.update())
             .collect::<Vec<_>>();
         self.execute_update_commands(updates);
 
@@ -114,7 +111,7 @@ impl Board {
             .state
             .invanders
             .iter_mut()
-            .flat_map(|(_, e)| e.ai.update(&mut e.state))
+            .flat_map(|(_, e)| e.update())
             .collect::<Vec<_>>();
         self.execute_update_commands(updates);
 
@@ -124,7 +121,7 @@ impl Board {
         let mut kill_aliens: Vec<UpdateCommand> = Vec::new();
         for (bullet_id, bullet) in &self.state.player_bullets {
             for (alien_id, alien) in &self.state.invanders {
-                if alien.state.collides(&bullet.state.pos) {
+                if alien.collides(&bullet.state().pos) {
                     kill_aliens.push(UpdateCommand::RemoveInvander(*alien_id));
                     kill_aliens.push(UpdateCommand::RemoveBullet(*bullet_id));
                     break;
@@ -134,7 +131,7 @@ impl Board {
         self.execute_update_commands(kill_aliens);
 
         for (_, bullet) in &self.state.bullets {
-            if self.state.player.state.collides(&bullet.state.pos) {
+            if self.state.player.state.collides(&bullet.state().pos) {
                 self.state.game_over = true;
             }
         }
@@ -161,13 +158,13 @@ impl Renderable for Board {
     fn render(&self, ctx: &mut Context) {
         self.state.player.state.render(ctx);
         for (_, bullet) in &self.state.bullets {
-            bullet.state.render(ctx);
+            bullet.state().render(ctx);
         }
         for (_, bullet) in &self.state.player_bullets {
-            bullet.state.render(ctx);
+            bullet.state().render(ctx);
         }
         for (_, invander) in &self.state.invanders {
-            invander.state.render(ctx);
+            invander.state().render(ctx);
         }
         if self.state.game_over {
             ctx.print(
