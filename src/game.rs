@@ -1,7 +1,7 @@
 use crate::board::Board;
 use crate::events::{Config, Event, Events};
 use crate::renderer::Renderer;
-use crate::sprite::Direction;
+use crate::util::Direction;
 use std::time::Duration;
 
 use termion::event::Key;

@@ -42,3 +42,12 @@ impl AddAssign for Point {
         };
     }
 }
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+    None,
+}

@@ -1,5 +1,6 @@
 use crate::renderer::Renderable;
-use crate::sprite::{Bullet, Direction, Invander, Player, Sprite};
+use crate::sprite::{Bullet, Invander, Player, Sprite};
+use crate::util::Direction;
 
 use std::collections::HashMap;
 use tui::style::Color;

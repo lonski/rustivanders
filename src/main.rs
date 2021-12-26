@@ -1,10 +1,10 @@
+mod ai;
 mod board;
 mod events;
 mod game;
-mod point;
 mod renderer;
 mod sprite;
-mod ai;
+mod util;
 
 use crate::game::Rustivanders;
 

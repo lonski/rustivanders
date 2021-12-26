@@ -1,6 +1,7 @@
 use crate::board::{UpdateCommand, BOARD_HEIGHT, BOARD_WIDTH};
-use crate::point::Point;
-use crate::sprite::{Direction, SpriteState};
+use crate::sprite::SpriteState;
+use crate::util::{Direction, Point};
+
 use tui::style::Color;
 
 pub struct BulletAi {}
