@@ -36,6 +36,10 @@ impl Player {
 }
 
 impl<'a> Sprite<'a> for Player {
+    fn set_id(&mut self, id: u32) {
+        self.state.id = id;
+    }
+
     fn update(&mut self) -> Vec<UpdateCommand> {
         self.ai.update(&mut self.state)
     }

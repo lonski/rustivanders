@@ -33,4 +33,8 @@ impl<'a> Sprite<'a> for Bullet {
     fn state(&'a self) -> &'a SpriteState {
         &self.state
     }
+
+    fn set_id(&mut self, id: u32) {
+        self.state.id = id;
+    }
 }

@@ -89,6 +89,11 @@ impl Invander {
 }
 
 impl<'a> Sprite<'a> for Invander {
+
+    fn set_id(&mut self, id: u32) {
+        self.state.id = id;
+    }
+
     fn update(&mut self) -> Vec<UpdateCommand> {
         self.ai.update(&mut self.state)
     }

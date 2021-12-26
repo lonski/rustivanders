@@ -15,9 +15,11 @@ pub trait Sprite<'a> {
         self.state().render(ctx);
     }
 
-    fn collides(&self, p: &Point) -> bool {
-        self.collides(p)
+    fn collides(&'a self, p: &Point) -> bool {
+        self.state().collides(p)
     }
+
+    fn set_id(&'a mut self, id: u32);
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -33,10 +35,10 @@ impl Cell {
 }
 
 pub struct SpriteState {
+    pub id: u32,
     pub pos: Point,
     pub direction: Direction,
     pub cells: Vec<Vec<Cell>>,
-    pub id: u32,
 }
 
 impl SpriteState {
