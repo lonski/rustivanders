@@ -66,14 +66,20 @@ impl Board {
             },
         };
         for row in 0..3 {
-            let n = 7;
+            let n = 9;
             for i in 0..n {
-                let x = 10 * (i + 1) as i16;
+                let x = 10 * (i) as i16 + 2;
                 let y = (BOARD_HEIGHT - 2) as i16 - row * 5;
                 // let x_max = BOARD_WIDTH as i16 - x * (n - i);
-                let x_max = x + 10;
+                let x_max = x + 7;
                 let x_range = (x, x_max as i16);
-                board.state.add_invander(Invander::new(x, y, &x_range));
+                if row == 2 {
+                    board
+                        .state
+                        .add_invander(Invander::new_small(x, y, &x_range));
+                } else {
+                    board.state.add_invander(Invander::new(x, y, &x_range));
+                }
             }
         }
         board
@@ -158,13 +164,13 @@ impl Renderable for Board {
     fn render(&self, ctx: &mut Context) {
         self.state.player.state.render(ctx);
         for (_, bullet) in &self.state.bullets {
-            bullet.state().render(ctx);
+            bullet.render(ctx);
         }
         for (_, bullet) in &self.state.player_bullets {
-            bullet.state().render(ctx);
+            bullet.render(ctx);
         }
         for (_, invander) in &self.state.invanders {
-            invander.state().render(ctx);
+            invander.render(ctx);
         }
         if self.state.game_over {
             ctx.print(

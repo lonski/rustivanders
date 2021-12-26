@@ -1,4 +1,3 @@
-use crate::board::Board;
 use termion::{raw::IntoRawMode, screen::AlternateScreen};
 use tui::{
     backend::TermionBackend,
@@ -33,7 +32,7 @@ impl Renderer {
         self.terminal.clear().unwrap();
     }
 
-    pub fn render(&mut self, board: &Board) {
+    pub fn render(&mut self, renderable: &dyn Renderable) {
         self.terminal
             .draw(|f| {
                 let render_area = Layout::default()
@@ -48,7 +47,7 @@ impl Renderer {
 
                 let canvas = Canvas::default()
                     .block(Block::default().borders(Borders::ALL))
-                    .paint(|mut ctx| board.render(&mut ctx))
+                    .paint(|mut ctx| renderable.render(&mut ctx))
                     .x_bounds([0.0, 94.0])
                     .y_bounds([0.0, 30.0]);
                 f.render_widget(canvas, render_area);

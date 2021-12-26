@@ -43,6 +43,10 @@ pub trait Sprite<'a> {
     fn update(&mut self) -> Vec<UpdateCommand>;
     fn collides(&self, p: &Point) -> bool;
     fn state(&'a self) -> &'a SpriteState;
+
+    fn render(&'a self, ctx: &mut Context) {
+        self.state().render(ctx);
+    }
 }
 
 impl Player {
@@ -125,6 +129,41 @@ impl Invander {
                     ],
                 ],
             },
+            ai: InvanderAi::new(x_range),
+        }
+    }
+
+    pub fn new_small(x: i16, y: i16, x_range: &(i16, i16)) -> Self {
+        Invander {
+            state: SpriteState {
+                id: 0,
+                pos: Point::new(x, y),
+                direction: Direction::Down,
+                cells: vec![
+                    vec![
+                        Cell::new(" ", Color::Red),
+                        Cell::new("^", Color::Red),
+                        Cell::new("^", Color::Red),
+                        Cell::new("^", Color::Red),
+                        Cell::new(" ", Color::Red),
+                    ],
+                    vec![
+                        Cell::new("{", Color::Green),
+                        Cell::new(" ", Color::Green),
+                        Cell::new(" ", Color::Green),
+                        Cell::new(" ", Color::Green),
+                        Cell::new("}", Color::Green),
+                    ],
+                    vec![
+                        Cell::new(" ", Color::Green),
+                        Cell::new("V", Color::Yellow),
+                        Cell::new("|", Color::LightRed),
+                        Cell::new("V", Color::Yellow),
+                        Cell::new(" ", Color::Green),
+                    ]
+                ],
+            },
+
             ai: InvanderAi::new(x_range),
         }
     }
