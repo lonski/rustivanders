@@ -1,4 +1,5 @@
-use crate::board::{UpdateCommand, BOARD_HEIGHT, BOARD_WIDTH};
+use crate::board::UpdateCommand;
+use crate::level::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use crate::sprite::SpriteState;
 use crate::util::{Direction, Point};
 
@@ -17,7 +18,7 @@ impl BulletAi {
                 sprite.move_by(&Point::new(0, -1));
             }
         }
-        if sprite.pos.y < 0 || sprite.pos.y > BOARD_HEIGHT as i16 {
+        if sprite.pos.y < 0 || sprite.pos.y > SCREEN_HEIGHT as i16 {
             cmds.push(UpdateCommand::RemoveBullet(sprite.id));
         }
         cmds
@@ -60,7 +61,7 @@ impl PlayerAi {
                 }
             }
             Direction::Right => {
-                if sprite.pos.x >= (BOARD_WIDTH - 2) as i16 {
+                if sprite.pos.x >= (SCREEN_WIDTH - 2) as i16 {
                     self.do_move = Direction::None;
                 } else {
                     sprite.move_by(&Point::new(1, 0));
@@ -79,11 +80,11 @@ pub struct InvanderAi {
     pub ticks_to_move: u16,
     pub x_range: (i16, i16),
     pub move_speed: u16,
-    pub fire_speed: u16,
+    pub fire_speed: f64,
 }
 
 impl InvanderAi {
-    pub fn new(x_range: &(i16, i16), move_speed: u16, fire_speed: u16) -> Self {
+    pub fn new(x_range: &(i16, i16), move_speed: u16, fire_speed: f64) -> Self {
         let mut alien = InvanderAi {
             x_range: *x_range,
             move_dir: Direction::Left,
@@ -97,7 +98,7 @@ impl InvanderAi {
     }
 
     fn random_tick_to_spawn_bullet(&mut self) {
-        self.ticks_to_spawn_bullet = (rand::random::<f64>() * 100.0) as u16 * self.fire_speed;
+        self.ticks_to_spawn_bullet = (rand::random::<f64>() * 100.0 * self.fire_speed) as u16;
     }
 }
 
@@ -122,7 +123,7 @@ impl InvanderAi {
                 }
             }
         }
-        if self.fire_speed > 0 {
+        if self.fire_speed > 0.0 {
             self.ticks_to_spawn_bullet -= 1;
             if self.ticks_to_spawn_bullet == 0 {
                 self.random_tick_to_spawn_bullet();

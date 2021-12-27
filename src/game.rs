@@ -25,7 +25,7 @@ impl Rustivanders {
         self.renderer.clear();
 
         let events = Events::with_config(Config {
-            tick_rate: Duration::from_millis(32),
+            tick_rate: Duration::from_millis(16),
         });
 
         loop {
@@ -51,6 +51,7 @@ impl Rustivanders {
             Key::Right => self.board.move_player(Direction::Right),
             Key::Left => self.board.move_player(Direction::Left),
             Key::Char(' ') => self.board.player_fire(),
+            Key::Char('n') => self.board.next_level(),
 
             _ => {}
         }

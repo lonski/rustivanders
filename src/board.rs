@@ -1,13 +1,10 @@
+use crate::level::{Level, SpriteCategory, SCREEN_HEIGHT, SCREEN_WIDTH};
 use crate::renderer::Renderable;
-use crate::sprite::{Bullet, Invander, Player, Sprite};
+use crate::sprite::{Bullet, Player, Sprite};
 use crate::util::Direction;
 
-use std::collections::HashMap;
 use tui::style::Color;
 use tui::widgets::canvas::Context;
-
-pub const BOARD_WIDTH: usize = 94;
-pub const BOARD_HEIGHT: usize = 30;
 
 pub enum UpdateCommand {
     SpawnBullet(Bullet),
@@ -16,53 +13,19 @@ pub enum UpdateCommand {
     RemoveInvander(u32),
 }
 
-enum SpriteCategory {
-    PlayerBullet,
-    AlienBullet,
-    Alien,
-}
-
 pub struct Board {
     pub player: Player,
-    pub player_bullets: HashMap<u32, Box<dyn for<'a> Sprite<'a>>>,
-    pub bullets: HashMap<u32, Box<dyn for<'a> Sprite<'a>>>,
-    pub aliens: HashMap<u32, Box<dyn for<'a> Sprite<'a>>>,
-    pub entity_id_counter: u32,
+    pub level: Level,
     pub game_over: bool,
 }
 
 impl Board {
     pub fn new() -> Self {
-        let mut board = Board {
+        Board {
             game_over: false,
-            player: Player::new((BOARD_WIDTH / 2) as i16, 1),
-            player_bullets: HashMap::new(),
-            bullets: HashMap::new(),
-            aliens: HashMap::new(),
-            entity_id_counter: 0,
-        };
-        for row in 0..3 {
-            let n = 9;
-            for i in 0..n {
-                let x = 10 * (i) as i16 + 2;
-                let y = (BOARD_HEIGHT - 2) as i16 - row * 5;
-                // let x_max = BOARD_WIDTH as i16 - x * (n - i);
-                let x_max = x + 7;
-                let x_range = (x, x_max as i16 - 2);
-                if row == 2 {
-                    board.add_sprite(
-                        Box::new(Invander::new_tank(x, y, &x_range)),
-                        SpriteCategory::Alien,
-                    );
-                } else {
-                    board.add_sprite(
-                        Box::new(Invander::new(x, y, &x_range)),
-                        SpriteCategory::Alien,
-                    );
-                }
-            }
+            player: Player::new((SCREEN_WIDTH / 2) as i16, 1),
+            level: Level::one(),
         }
-        board
     }
 
     pub fn move_player(&mut self, dir: Direction) {
@@ -73,16 +36,31 @@ impl Board {
         self.player.ai.do_fire = true;
     }
 
+    fn reset_game_with_level(&mut self, level: Level) {
+        self.level = level;
+        self.game_over = false;
+    }
+
+    pub fn next_level(&mut self) {
+        if self.level.is_finished() {
+            match self.level.number {
+                1 => self.reset_game_with_level(Level::two()),
+                2 => self.reset_game_with_level(Level::three()),
+                _ => self.reset_game_with_level(Level::one()),
+            }
+        }
+    }
+
     pub fn update(&mut self) {
-        if self.game_over || self.aliens.len() == 0 {
+        if self.game_over || self.level.is_finished() {
             return;
         }
 
         // Update sprites
         let mut after_update_commands = [
-            Board::update_sprites(self.bullets.values_mut()),
-            Board::update_sprites(self.player_bullets.values_mut()),
-            Board::update_sprites(self.aliens.values_mut()),
+            Board::update_sprites(self.level.bullets.values_mut()),
+            Board::update_sprites(self.level.player_bullets.values_mut()),
+            Board::update_sprites(self.level.aliens.values_mut()),
             self.player.ai.update(&mut self.player.state),
         ]
         .into_iter()
@@ -90,8 +68,8 @@ impl Board {
         .collect::<Vec<_>>();
 
         // Check collisions with aliens
-        for (bullet_id, bullet) in &self.player_bullets {
-            for (alien_id, alien) in &mut self.aliens {
+        for (bullet_id, bullet) in &self.level.player_bullets {
+            for (alien_id, alien) in &mut self.level.aliens {
                 if alien.collides(&bullet.state().pos) {
                     after_update_commands.push(UpdateCommand::RemoveBullet(*bullet_id));
                     alien.modify_hp(-1);
@@ -105,7 +83,7 @@ impl Board {
         self.execute_update_commands(after_update_commands);
 
         // Check collistions with player
-        for (_, bullet) in &self.bullets {
+        for (_, bullet) in &self.level.bullets {
             if self.player.state.collides(&bullet.state().pos) {
                 self.game_over = true;
             }
@@ -119,42 +97,21 @@ impl Board {
         sprites.flat_map(|e| e.update()).collect::<Vec<_>>()
     }
 
-    fn next_id(&mut self) -> u32 {
-        self.entity_id_counter += 1;
-        self.entity_id_counter
-    }
-
-    fn add_sprite(&mut self, mut sprite: Box<dyn for<'a> Sprite<'a>>, category: SpriteCategory) {
-        let id = self.next_id();
-        sprite.set_id(id);
-        match category {
-            SpriteCategory::Alien => {
-                self.aliens.insert(id, sprite);
-            }
-            SpriteCategory::AlienBullet => {
-                self.bullets.insert(id, sprite);
-            }
-            SpriteCategory::PlayerBullet => {
-                self.player_bullets.insert(id, sprite);
-            }
-        }
-    }
-
     fn execute_update_commands(&mut self, commands: Vec<UpdateCommand>) {
         for cmd in commands {
             match cmd {
-                UpdateCommand::SpawnBullet(sprite) => {
-                    self.add_sprite(Box::new(sprite), SpriteCategory::AlienBullet)
-                }
-                UpdateCommand::SpawnPlayerBullet(sprite) => {
-                    self.add_sprite(Box::new(sprite), SpriteCategory::PlayerBullet)
-                }
+                UpdateCommand::SpawnBullet(sprite) => self
+                    .level
+                    .add_sprite(Box::new(sprite), SpriteCategory::AlienBullet),
+                UpdateCommand::SpawnPlayerBullet(sprite) => self
+                    .level
+                    .add_sprite(Box::new(sprite), SpriteCategory::PlayerBullet),
                 UpdateCommand::RemoveBullet(id) => {
-                    self.bullets.remove(&id);
-                    self.player_bullets.remove(&id);
+                    self.level.bullets.remove(&id);
+                    self.level.player_bullets.remove(&id);
                 }
                 UpdateCommand::RemoveInvander(id) => {
-                    self.aliens.remove(&id);
+                    self.level.aliens.remove(&id);
                 }
             }
         }
@@ -164,31 +121,29 @@ impl Board {
 impl Renderable for Board {
     fn render(&self, ctx: &mut Context) {
         self.player.state.render(ctx);
-        for (_, bullet) in &self.bullets {
+        for (_, bullet) in &self.level.bullets {
             bullet.render(ctx);
         }
-        for (_, bullet) in &self.player_bullets {
+        for (_, bullet) in &self.level.player_bullets {
             bullet.render(ctx);
         }
-        for (_, invander) in &self.aliens {
+        for (_, invander) in &self.level.aliens {
             invander.render(ctx);
         }
         if self.game_over {
             ctx.print(
-                BOARD_WIDTH as f64 / 2.0 - 5.0,
-                BOARD_HEIGHT as f64 / 2.5,
+                SCREEN_WIDTH as f64 / 2.0 - 5.0,
+                SCREEN_HEIGHT as f64 / 2.5,
                 "GAME OVER",
                 Color::Red,
             );
         }
 
-        if self.aliens.len() == 0 {
-            ctx.print(
-                BOARD_WIDTH as f64 / 2.0 - 4.0,
-                BOARD_HEIGHT as f64 / 2.0,
-                "You won!",
-                Color::Green,
-            );
+        if self.level.is_finished() {
+            let x = SCREEN_WIDTH as f64 / 2.0 - 4.0;
+            let y = SCREEN_HEIGHT as f64 / 2.0;
+            ctx.print(x, y, "You won!", Color::Green);
+            ctx.print(x - 8.0, y - 1.0, "Press 'n' for next level", Color::Green);
         }
     }
 }

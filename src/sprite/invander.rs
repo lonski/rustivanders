@@ -12,7 +12,7 @@ pub struct Invander {
 }
 
 impl Invander {
-    pub fn new(x: i16, y: i16, x_range: &(i16, i16)) -> Self {
+    pub fn new_fighter(x: i16, y: i16, x_range: &(i16, i16)) -> Self {
         Invander {
             state: SpriteState {
                 id: 0,
@@ -49,7 +49,7 @@ impl Invander {
                     ],
                 ],
             },
-            ai: InvanderAi::new(x_range, 4, 8),
+            ai: InvanderAi::new(x_range, 10, 20.0),
         }
     }
 
@@ -85,7 +85,54 @@ impl Invander {
                 ],
             },
 
-            ai: InvanderAi::new(x_range, 2, 0),
+            ai: InvanderAi::new(x_range, 4, 0.0),
+        }
+    }
+
+    pub fn new_assasin(x: i16, y: i16, x_range: &(i16, i16)) -> Self {
+        Invander {
+            state: SpriteState {
+                id: 0,
+                hp: 1,
+                pos: Point::new(x, y),
+                direction: Direction::Down,
+                cells: vec![
+                    vec![
+                        Cell::new(" ", Color::Green),
+                        Cell::new("<", Color::LightGreen),
+                        Cell::new("<", Color::Green),
+                        Cell::new("<", Color::Cyan),
+                        Cell::new(" ", Color::Green),
+                        Cell::new(">", Color::Cyan),
+                        Cell::new(">", Color::Green),
+                        Cell::new(">", Color::LightGreen),
+                        Cell::new(" ", Color::Green),
+                    ],
+                    vec![
+                        Cell::new("<", Color::LightGreen),
+                        Cell::new("<", Color::Green),
+                        Cell::new("<", Color::Cyan),
+                        Cell::new(" ", Color::Green),
+                        Cell::new("&", Color::Red),
+                        Cell::new(" ", Color::Green),
+                        Cell::new(">", Color::Cyan),
+                        Cell::new(">", Color::Green),
+                        Cell::new(">", Color::LightGreen),
+                    ],
+                    vec![
+                        Cell::new(" ", Color::Green),
+                        Cell::new("<", Color::LightGreen),
+                        Cell::new("<", Color::Green),
+                        Cell::new("<", Color::Cyan),
+                        Cell::new(" ", Color::Green),
+                        Cell::new(">", Color::Cyan),
+                        Cell::new(">", Color::Green),
+                        Cell::new(">", Color::LightGreen),
+                        Cell::new(" ", Color::Green),
+                    ],
+                ],
+            },
+            ai: InvanderAi::new(x_range, 1, 1.0),
         }
     }
 }
