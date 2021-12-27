@@ -48,7 +48,7 @@ impl Board {
                 let y = (BOARD_HEIGHT - 2) as i16 - row * 5;
                 // let x_max = BOARD_WIDTH as i16 - x * (n - i);
                 let x_max = x + 7;
-                let x_range = (x, x_max as i16);
+                let x_range = (x, x_max as i16 - 2);
                 if row == 2 {
                     board.add_sprite(
                         Box::new(Invander::new_small(x, y, &x_range)),
@@ -78,30 +78,30 @@ impl Board {
             return;
         }
 
-        let after_update_commands = Board::update_sprites(self.bullets.values_mut());
-        self.execute_update_commands(after_update_commands);
+        // Update sprites
+        let mut after_update_commands = [
+            Board::update_sprites(self.bullets.values_mut()),
+            Board::update_sprites(self.player_bullets.values_mut()),
+            Board::update_sprites(self.aliens.values_mut()),
+            self.player.ai.update(&mut self.player.state),
+        ]
+        .into_iter()
+        .flat_map(|u| u.into_iter())
+        .collect::<Vec<_>>();
 
-        let after_update_commands = Board::update_sprites(self.player_bullets.values_mut());
-        self.execute_update_commands(after_update_commands);
-
-        let after_update_commands = Board::update_sprites(self.aliens.values_mut());
-        self.execute_update_commands(after_update_commands);
-
-        let after_update_commands = self.player.ai.update(&mut self.player.state);
-        self.execute_update_commands(after_update_commands);
-
-        let mut kill_aliens: Vec<UpdateCommand> = Vec::new();
+        // Check collisions with aliens
         for (bullet_id, bullet) in &self.player_bullets {
             for (alien_id, alien) in &self.aliens {
                 if alien.collides(&bullet.state().pos) {
-                    kill_aliens.push(UpdateCommand::RemoveInvander(*alien_id));
-                    kill_aliens.push(UpdateCommand::RemoveBullet(*bullet_id));
+                    after_update_commands.push(UpdateCommand::RemoveInvander(*alien_id));
+                    after_update_commands.push(UpdateCommand::RemoveBullet(*bullet_id));
                     break;
                 }
             }
         }
-        self.execute_update_commands(kill_aliens);
+        self.execute_update_commands(after_update_commands);
 
+        // Check collistions with player
         for (_, bullet) in &self.bullets {
             if self.player.state.collides(&bullet.state().pos) {
                 self.game_over = true;
