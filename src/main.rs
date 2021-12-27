@@ -2,9 +2,9 @@ mod ai;
 mod board;
 mod events;
 mod game;
+mod level;
 mod renderer;
 mod sprite;
-mod level;
 mod util;
 
 use crate::game::Rustivanders;

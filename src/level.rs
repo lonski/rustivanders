@@ -1,3 +1,4 @@
+use crate::sprite::Boss;
 use crate::sprite::Invander;
 use crate::sprite::Sprite;
 use std::collections::HashMap;
@@ -92,6 +93,21 @@ impl Level {
                 SpriteCategory::Alien,
             );
         }
+
+        level
+    }
+
+    pub fn four() -> Self {
+        let mut level = Level::new(4);
+
+        let x = 32;
+        let y = 25;
+        let x_range = (-40, SCREEN_WIDTH as i16 + 20);
+        let y_range = (20, 30);
+        level.add_sprite(
+            Box::new(Boss::new_boss(x, y, &x_range, &y_range)),
+            SpriteCategory::Alien,
+        );
 
         level
     }

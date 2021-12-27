@@ -1,6 +1,6 @@
 use crate::board::UpdateCommand;
 use crate::level::{SCREEN_HEIGHT, SCREEN_WIDTH};
-use crate::sprite::SpriteState;
+use crate::sprite::{Bullet, SpriteState};
 use crate::util::{Direction, Point};
 
 use tui::style::Color;
@@ -73,7 +73,6 @@ impl PlayerAi {
     }
 }
 
-#[derive(Clone)]
 pub struct InvanderAi {
     pub move_dir: Direction,
     pub ticks_to_spawn_bullet: u16,
@@ -130,6 +129,114 @@ impl InvanderAi {
                 commands.push(UpdateCommand::SpawnBullet(
                     sprite.fire(Direction::Down, Color::Red),
                 ));
+            }
+        }
+
+        commands
+    }
+}
+
+pub struct BossAi {
+    pub move_dir: Direction,
+    pub ticks_to_spawn_bullet: u16,
+    pub ticks_to_move: u16,
+    pub x_range: (i16, i16),
+    pub y_range: (i16, i16),
+    pub move_speed: u16,
+    pub fire_speed: f64,
+    pub bullet_count: u16,
+}
+
+impl BossAi {
+    pub fn new(
+        x_range: &(i16, i16),
+        y_range: &(i16, i16),
+        move_speed: u16,
+        fire_speed: f64,
+    ) -> Self {
+        let mut alien = BossAi {
+            bullet_count: 10,
+            x_range: *x_range,
+            y_range: *y_range,
+            move_dir: Direction::Left,
+            move_speed,
+            ticks_to_move: move_speed,
+            fire_speed,
+            ticks_to_spawn_bullet: 0,
+        };
+        alien.random_tick_to_spawn_bullet();
+        alien
+    }
+
+    fn random_tick_to_spawn_bullet(&mut self) {
+        self.ticks_to_spawn_bullet = (rand::random::<f64>() * 100.0 * self.fire_speed) as u16;
+    }
+
+    fn random_v_dir(&self) -> Direction {
+        if rand::random::<f64>() > 0.5 {
+            return Direction::Up;
+        }
+        Direction::Down
+    }
+}
+
+impl BossAi {
+    fn calc_y_mod(&self, sprite: &SpriteState) -> i16 {
+        if (sprite.pos.x == -35 && self.move_dir == Direction::Left)
+            || (sprite.pos.x == SCREEN_WIDTH as i16 + 35 && self.move_dir == Direction::Right)
+        {
+            return match self.random_v_dir() {
+                Direction::Down => {
+                    (std::cmp::max(sprite.pos.y - self.y_range.0, 0) as f64 * rand::random::<f64>())
+                        as i16
+                        * -1
+                }
+                _ => {
+                    (std::cmp::max(self.y_range.1 - sprite.pos.y, 0) as f64 * rand::random::<f64>())
+                        as i16
+                }
+            };
+        };
+
+        0
+    }
+
+    pub fn update(&mut self, sprite: &mut SpriteState) -> Vec<UpdateCommand> {
+        let mut commands: Vec<UpdateCommand> = Vec::new();
+        self.ticks_to_move -= 1;
+        if self.ticks_to_move == 0 {
+            self.ticks_to_move = self.move_speed;
+            match self.move_dir {
+                Direction::Left => {
+                    sprite.move_by(&Point::new(-1, self.calc_y_mod(sprite)));
+                    if sprite.pos.x < self.x_range.0 as i16 {
+                        self.move_dir = Direction::Right;
+                    }
+                }
+                _ => {
+                    sprite.move_by(&Point::new(1, self.calc_y_mod(sprite)));
+                    if sprite.pos.x > self.x_range.1 {
+                        self.move_dir = Direction::Left;
+                    }
+                }
+            }
+        }
+        if self.fire_speed > 0.0 {
+            if self.ticks_to_spawn_bullet == 0 && self.bullet_count > 0 {
+                for laser in sprite.find_char_pos('V') {
+                    commands.push(UpdateCommand::SpawnBullet(Bullet::new(
+                        laser.x + sprite.pos.x,
+                        -1 * laser.y + sprite.pos.y,
+                        Direction::Down,
+                        Color::LightMagenta,
+                    )));
+                }
+                self.bullet_count -= 1;
+            } else if self.bullet_count == 0 {
+                self.bullet_count = 10;
+                self.random_tick_to_spawn_bullet();
+            } else {
+                self.ticks_to_spawn_bullet -= 1;
             }
         }
 

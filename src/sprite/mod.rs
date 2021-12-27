@@ -16,3 +16,7 @@ pub use invander::Invander;
 mod bullet;
 
 pub use bullet::Bullet;
+
+mod boss;
+
+pub use boss::Boss;

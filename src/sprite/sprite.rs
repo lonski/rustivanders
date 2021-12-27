@@ -77,6 +77,19 @@ impl SpriteState {
         };
         Point::new(x, y)
     }
+
+    pub fn find_char_pos(&self, c: char) -> Vec<Point> {
+        let mut v = Vec::new();
+        for y in 0..self.cells.len() {
+            let row = &self.cells[y];
+            for x in 0..row.len() {
+                if row[x].symbol == c.to_string() {
+                    v.push(Point::new(x as i16, y as i16));
+                }
+            }
+        }
+        v
+    }
 }
 
 impl Renderable for SpriteState {

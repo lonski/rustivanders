@@ -46,8 +46,11 @@ impl Board {
             match self.level.number {
                 1 => self.reset_game_with_level(Level::two()),
                 2 => self.reset_game_with_level(Level::three()),
+                3 => self.reset_game_with_level(Level::four()),
                 _ => self.reset_game_with_level(Level::one()),
             }
+        } else if self.game_over {
+            self.reset_game_with_level(Level::one());
         }
     }
 
@@ -131,11 +134,14 @@ impl Renderable for Board {
             invander.render(ctx);
         }
         if self.game_over {
+            let x = SCREEN_WIDTH as f64 / 2.0 - 5.0;
+            let y = SCREEN_HEIGHT as f64 / 2.5;
+            ctx.print(x, y, "GAME OVER", Color::Red);
             ctx.print(
-                SCREEN_WIDTH as f64 / 2.0 - 5.0,
-                SCREEN_HEIGHT as f64 / 2.5,
-                "GAME OVER",
-                Color::Red,
+                x - 9.0,
+                y - 1.0,
+                "Press 'n' to start new game",
+                Color::LightRed,
             );
         }
 
@@ -143,7 +149,12 @@ impl Renderable for Board {
             let x = SCREEN_WIDTH as f64 / 2.0 - 4.0;
             let y = SCREEN_HEIGHT as f64 / 2.0;
             ctx.print(x, y, "You won!", Color::Green);
-            ctx.print(x - 8.0, y - 1.0, "Press 'n' for next level", Color::Green);
+            ctx.print(
+                x - 8.0,
+                y - 1.0,
+                "Press 'n' for next level",
+                Color::LightGreen,
+            );
         }
     }
 }
