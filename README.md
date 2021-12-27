@@ -2,6 +2,8 @@
 
 ASCII graphics Space Invanders clone
 
+![Screen](screen1.png)
+
 ## Build
 
 To run the game from sources:
