@@ -16,6 +16,7 @@ impl Bullet {
         Bullet {
             state: SpriteState {
                 id: 0,
+                hp: 1,
                 pos: Point::new(x, y),
                 direction: dir,
                 cells: vec![vec![Cell::new("*", color)]],

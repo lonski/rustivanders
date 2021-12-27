@@ -15,6 +15,7 @@ impl Player {
     pub fn new(x: i16, y: i16) -> Self {
         Player {
             state: SpriteState {
+                hp: 1,
                 id: 0,
                 pos: Point::new(x, y),
                 direction: Direction::Up,

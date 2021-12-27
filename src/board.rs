@@ -51,7 +51,7 @@ impl Board {
                 let x_range = (x, x_max as i16 - 2);
                 if row == 2 {
                     board.add_sprite(
-                        Box::new(Invander::new_small(x, y, &x_range)),
+                        Box::new(Invander::new_tank(x, y, &x_range)),
                         SpriteCategory::Alien,
                     );
                 } else {
@@ -91,10 +91,13 @@ impl Board {
 
         // Check collisions with aliens
         for (bullet_id, bullet) in &self.player_bullets {
-            for (alien_id, alien) in &self.aliens {
+            for (alien_id, alien) in &mut self.aliens {
                 if alien.collides(&bullet.state().pos) {
-                    after_update_commands.push(UpdateCommand::RemoveInvander(*alien_id));
                     after_update_commands.push(UpdateCommand::RemoveBullet(*bullet_id));
+                    alien.modify_hp(-1);
+                    if alien.state().hp == 0 {
+                        after_update_commands.push(UpdateCommand::RemoveInvander(*alien_id));
+                    }
                     break;
                 }
             }

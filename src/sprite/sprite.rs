@@ -19,6 +19,8 @@ pub trait Sprite<'a> {
         self.state().collides(p)
     }
 
+    fn modify_hp(&mut self, _: i16) {}
+
     fn set_id(&'a mut self, id: u32);
 }
 
@@ -35,6 +37,7 @@ impl Cell {
 }
 
 pub struct SpriteState {
+    pub hp: u16,
     pub id: u32,
     pub pos: Point,
     pub direction: Direction,

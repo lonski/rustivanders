@@ -16,6 +16,7 @@ impl Invander {
         Invander {
             state: SpriteState {
                 id: 0,
+                hp: 1,
                 pos: Point::new(x, y),
                 direction: Direction::Down,
                 cells: vec![
@@ -48,14 +49,15 @@ impl Invander {
                     ],
                 ],
             },
-            ai: InvanderAi::new(x_range),
+            ai: InvanderAi::new(x_range, 4, 8),
         }
     }
 
-    pub fn new_small(x: i16, y: i16, x_range: &(i16, i16)) -> Self {
+    pub fn new_tank(x: i16, y: i16, x_range: &(i16, i16)) -> Self {
         Invander {
             state: SpriteState {
                 id: 0,
+                hp: 2,
                 pos: Point::new(x, y),
                 direction: Direction::Down,
                 cells: vec![
@@ -76,20 +78,19 @@ impl Invander {
                     vec![
                         Cell::new(" ", Color::Green),
                         Cell::new("V", Color::Yellow),
-                        Cell::new("|", Color::LightRed),
+                        Cell::new("V", Color::Yellow),
                         Cell::new("V", Color::Yellow),
                         Cell::new(" ", Color::Green),
                     ],
                 ],
             },
 
-            ai: InvanderAi::new(x_range),
+            ai: InvanderAi::new(x_range, 2, 0),
         }
     }
 }
 
 impl<'a> Sprite<'a> for Invander {
-
     fn set_id(&mut self, id: u32) {
         self.state.id = id;
     }
@@ -100,5 +101,9 @@ impl<'a> Sprite<'a> for Invander {
 
     fn state(&'a self) -> &'a SpriteState {
         &self.state
+    }
+
+    fn modify_hp(&mut self, hp_mod: i16) {
+        self.state.hp = std::cmp::max(self.state.hp as i16 + hp_mod, 0) as u16;
     }
 }
