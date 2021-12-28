@@ -132,7 +132,7 @@ impl Invander {
                     ],
                 ],
             },
-            ai: InvanderAi::new(x_range, 1, 1.0),
+            ai: InvanderAi::new(x_range, 1, 0.8),
         }
     }
 }

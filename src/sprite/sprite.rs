@@ -55,7 +55,7 @@ impl SpriteState {
                 if cell.symbol == " " {
                     continue;
                 }
-                let c = self.pos + Point::new(dx as i16, dy as i16 * -1);
+                let c = self.pos + Point::new(dx as i16, -(dy as i16));
                 if *p == c {
                     return true;
                 }
@@ -82,8 +82,8 @@ impl SpriteState {
         let mut v = Vec::new();
         for y in 0..self.cells.len() {
             let row = &self.cells[y];
-            for x in 0..row.len() {
-                if row[x].symbol == c.to_string() {
+            for (x, cell) in row.iter().enumerate() {
+                if cell.symbol == c.to_string() {
                     v.push(Point::new(x as i16, y as i16));
                 }
             }
@@ -102,7 +102,7 @@ impl Renderable for SpriteState {
                 ctx.print(
                     (self.pos.x + dx as i16) as f64,
                     (self.pos.y - dy as i16) as f64,
-                    &cell.symbol,
+                    cell.symbol,
                     cell.color,
                 );
             }

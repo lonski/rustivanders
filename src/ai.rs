@@ -187,9 +187,8 @@ impl BossAi {
         {
             return match self.random_v_dir() {
                 Direction::Down => {
-                    (std::cmp::max(sprite.pos.y - self.y_range.0, 0) as f64 * rand::random::<f64>())
-                        as i16
-                        * -1
+                    -((std::cmp::max(sprite.pos.y - self.y_range.0, 0) as f64
+                        * rand::random::<f64>()) as i16)
                 }
                 _ => {
                     (std::cmp::max(self.y_range.1 - sprite.pos.y, 0) as f64 * rand::random::<f64>())
@@ -226,7 +225,7 @@ impl BossAi {
                 for laser in sprite.find_char_pos('V') {
                     commands.push(UpdateCommand::SpawnBullet(Bullet::new(
                         laser.x + sprite.pos.x,
-                        -1 * laser.y + sprite.pos.y,
+                        -laser.y + sprite.pos.y,
                         Direction::Down,
                         Color::LightMagenta,
                     )));

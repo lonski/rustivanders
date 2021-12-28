@@ -86,7 +86,7 @@ impl Board {
         self.execute_update_commands(after_update_commands);
 
         // Check collistions with player
-        for (_, bullet) in &self.level.bullets {
+        for bullet in self.level.bullets.values() {
             if self.player.state.collides(&bullet.state().pos) {
                 self.game_over = true;
             }
@@ -124,13 +124,13 @@ impl Board {
 impl Renderable for Board {
     fn render(&self, ctx: &mut Context) {
         self.player.state.render(ctx);
-        for (_, bullet) in &self.level.bullets {
+        for bullet in self.level.bullets.values() {
             bullet.render(ctx);
         }
-        for (_, bullet) in &self.level.player_bullets {
+        for bullet in self.level.player_bullets.values() {
             bullet.render(ctx);
         }
-        for (_, invander) in &self.level.aliens {
+        for invander in self.level.aliens.values() {
             invander.render(ctx);
         }
         if self.game_over {

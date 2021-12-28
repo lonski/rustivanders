@@ -83,7 +83,7 @@ impl Level {
     pub fn three() -> Self {
         let mut level = Level::new(3);
 
-        for row in 0..4 {
+        for row in 0..5 {
             let x = -10 * row;
             let y = (SCREEN_HEIGHT - 2) as i16 - row * 5;
             let x_max = SCREEN_WIDTH as i16 + (10 * row);
@@ -113,7 +113,7 @@ impl Level {
     }
 
     pub fn is_finished(&self) -> bool {
-        self.aliens.len() == 0
+        self.aliens.is_empty()
     }
 
     fn next_id(&mut self) -> u32 {

@@ -47,7 +47,7 @@ impl Renderer {
 
                 let canvas = Canvas::default()
                     .block(Block::default().borders(Borders::ALL))
-                    .paint(|mut ctx| renderable.render(&mut ctx))
+                    .paint(|ctx| renderable.render(ctx))
                     .x_bounds([0.0, 94.0])
                     .y_bounds([0.0, 30.0]);
                 f.render_widget(canvas, render_area);
