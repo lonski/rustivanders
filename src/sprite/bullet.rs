@@ -12,7 +12,7 @@ pub struct Bullet {
 }
 
 impl Bullet {
-    pub fn new(x: i16, y: i16, dir: Direction, color: Color) -> Self {
+    pub fn new(x: i16, y: i16, dir: Direction, color: Color, bullet_speed: i32) -> Self {
         Bullet {
             state: SpriteState {
                 id: 0,
@@ -21,7 +21,7 @@ impl Bullet {
                 direction: dir,
                 cells: vec![vec![Cell::new("*", color)]],
             },
-            ai: BulletAi {},
+            ai: BulletAi::new(bullet_speed),
         }
     }
 }

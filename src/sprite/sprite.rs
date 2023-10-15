@@ -64,9 +64,9 @@ impl SpriteState {
         false
     }
 
-    pub fn fire(&self, dir: Direction, color: Color) -> Bullet {
+    pub fn fire(&self, dir: Direction, color: Color, bullet_speed: i32) -> Bullet {
         let start = self.fire_point();
-        Bullet::new(start.x, start.y, dir, color)
+        Bullet::new(start.x, start.y, dir, color, bullet_speed)
     }
 
     pub fn fire_point(&self) -> Point {

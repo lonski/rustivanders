@@ -5,21 +5,33 @@ use crate::util::{Direction, Point};
 
 use tui::style::Color;
 
-pub struct BulletAi {}
+pub struct BulletAi {
+    pub speed: i32,
+    pub tick: i32,
+}
 
 impl BulletAi {
+    pub fn new(speed: i32) -> Self {
+        BulletAi { speed, tick: 0 }
+    }
+
     pub fn update(&mut self, sprite: &mut SpriteState) -> Vec<UpdateCommand> {
         let mut cmds = Vec::new();
-        match sprite.direction {
-            Direction::Up => {
-                sprite.move_by(&Point::new(0, 1));
+        self.tick += 1;
+        if self.tick >= self.speed {
+            self.tick = 0;
+
+            match sprite.direction {
+                Direction::Up => {
+                    sprite.move_by(&Point::new(0, 1));
+                }
+                _ => {
+                    sprite.move_by(&Point::new(0, -1));
+                }
             }
-            _ => {
-                sprite.move_by(&Point::new(0, -1));
+            if sprite.pos.y < 0 || sprite.pos.y > SCREEN_HEIGHT as i16 {
+                cmds.push(UpdateCommand::RemoveBullet(sprite.id));
             }
-        }
-        if sprite.pos.y < 0 || sprite.pos.y > SCREEN_HEIGHT as i16 {
-            cmds.push(UpdateCommand::RemoveBullet(sprite.id));
         }
         cmds
     }
@@ -45,9 +57,11 @@ impl PlayerAi {
         if self.do_fire && self.ticks_to_fire == 0 {
             self.do_fire = false;
             self.ticks_to_fire = 15;
-            cmd.push(UpdateCommand::SpawnPlayerBullet(
-                sprite.fire(Direction::Up, Color::LightBlue),
-            ));
+            cmd.push(UpdateCommand::SpawnPlayerBullet(sprite.fire(
+                Direction::Up,
+                Color::LightBlue,
+                1,
+            )));
         }
         if self.ticks_to_fire > 0 {
             self.ticks_to_fire -= 1;
@@ -79,25 +93,27 @@ pub struct InvanderAi {
     pub ticks_to_move: u16,
     pub x_range: (i16, i16),
     pub move_speed: u16,
-    pub fire_speed: f64,
+    pub fire_rate: f64,
+    pub bullet_speed: i32,
 }
 
 impl InvanderAi {
-    pub fn new(x_range: &(i16, i16), move_speed: u16, fire_speed: f64) -> Self {
+    pub fn new(x_range: &(i16, i16), move_speed: u16, fire_rate: f64, bullet_speed: i32) -> Self {
         let mut alien = InvanderAi {
             x_range: *x_range,
             move_dir: Direction::Left,
             move_speed,
             ticks_to_move: move_speed,
-            fire_speed,
+            fire_rate,
             ticks_to_spawn_bullet: 0,
+            bullet_speed,
         };
         alien.random_tick_to_spawn_bullet();
         alien
     }
 
     fn random_tick_to_spawn_bullet(&mut self) {
-        self.ticks_to_spawn_bullet = (rand::random::<f64>() * 100.0 * self.fire_speed) as u16;
+        self.ticks_to_spawn_bullet = (rand::random::<f64>() * 100.0 * self.fire_rate) as u16;
     }
 }
 
@@ -122,13 +138,15 @@ impl InvanderAi {
                 }
             }
         }
-        if self.fire_speed > 0.0 {
+        if self.fire_rate > 0.0 {
             self.ticks_to_spawn_bullet -= 1;
             if self.ticks_to_spawn_bullet == 0 {
                 self.random_tick_to_spawn_bullet();
-                commands.push(UpdateCommand::SpawnBullet(
-                    sprite.fire(Direction::Down, Color::Red),
-                ));
+                commands.push(UpdateCommand::SpawnBullet(sprite.fire(
+                    Direction::Down,
+                    Color::Red,
+                    self.bullet_speed,
+                )));
             }
         }
 
@@ -143,7 +161,7 @@ pub struct BossAi {
     pub x_range: (i16, i16),
     pub y_range: (i16, i16),
     pub move_speed: u16,
-    pub fire_speed: f64,
+    pub fire_rate: f64,
     pub bullet_count: u16,
 }
 
@@ -152,7 +170,7 @@ impl BossAi {
         x_range: &(i16, i16),
         y_range: &(i16, i16),
         move_speed: u16,
-        fire_speed: f64,
+        fire_rate: f64,
     ) -> Self {
         let mut alien = BossAi {
             bullet_count: 10,
@@ -161,7 +179,7 @@ impl BossAi {
             move_dir: Direction::Left,
             move_speed,
             ticks_to_move: move_speed,
-            fire_speed,
+            fire_rate,
             ticks_to_spawn_bullet: 0,
         };
         alien.random_tick_to_spawn_bullet();
@@ -169,7 +187,7 @@ impl BossAi {
     }
 
     fn random_tick_to_spawn_bullet(&mut self) {
-        self.ticks_to_spawn_bullet = (rand::random::<f64>() * 100.0 * self.fire_speed) as u16;
+        self.ticks_to_spawn_bullet = (rand::random::<f64>() * 100.0 * self.fire_rate) as u16;
     }
 
     fn random_v_dir(&self) -> Direction {
@@ -220,7 +238,7 @@ impl BossAi {
                 }
             }
         }
-        if self.fire_speed > 0.0 {
+        if self.fire_rate > 0.0 {
             if self.ticks_to_spawn_bullet == 0 && self.bullet_count > 0 {
                 for laser in sprite.find_char_pos('V') {
                     commands.push(UpdateCommand::SpawnBullet(Bullet::new(
@@ -228,6 +246,7 @@ impl BossAi {
                         -laser.y + sprite.pos.y,
                         Direction::Down,
                         Color::LightMagenta,
+                        1,
                     )));
                 }
                 self.bullet_count -= 1;
